@@ -129,6 +129,8 @@
 //#define PRT_DATA        am_util_stdio_printf
 #endif
 
+#define PARTIAL_IMG_SIZE 8180
+
 
 typedef struct
 {
@@ -149,7 +151,7 @@ typedef struct
 {
     am_secboot_wired_msghdr_t msg;
 	uint32_t Sequence;
-	uint8_t Image_Blob[8180];
+	uint8_t Image_Blob[PARTIAL_IMG_SIZE];
 }am_Data_Message;
 
 typedef struct
@@ -355,7 +357,7 @@ void start_boot_mode(bool bReset)
         //
         // Short delay.
         //
-        am_util_delay_us(5);
+        am_util_delay_ms(1);
 
         //
         // Release RESET.
@@ -365,7 +367,7 @@ void start_boot_mode(bool bReset)
         //
         // Short delay.
         //
-        am_util_delay_us(5);
+        am_util_delay_ms(1);
     }
 }
 
@@ -443,7 +445,7 @@ void send_hello(void)
     //
     // Compute CRC
     //
-    PRT_INFO("send_hello: sending bytes: %d.\n", pkt.msg.length );
+    PRT_INFO("Send a HELLO packet\n");
     am_hal_crc32((uint32_t)&pkt.msg.msgType, pkt.msg.length - sizeof(uint32_t), &pkt.msg.crc32);
     iom_slave_write(IOSOFFSET_WRITE_CMD, (uint32_t*)&pkt, sizeof(pkt));
 }
@@ -473,12 +475,7 @@ void send_update(uint8_t *Blob, uint32_t size)
 	am_hal_crc32((uint32_t)Blob, size, &pkt.Blob_CRC32);
 	pkt.Valid_Size = 0;
 	am_hal_crc32((uint32_t)&pkt.msg.msgType, pkt.msg.length - sizeof(uint32_t), &pkt.msg.crc32);
-	PRT_INFO("pkt.msg.crc32 = %x\n", pkt.msg.crc32 );
-	PRT_INFO("pkt.msg.length = %d\n", pkt.msg.length);
-	PRT_INFO("pkt.msg.msgType = %x\n", pkt.msg.msgType);
-	PRT_INFO("pkt.Total_Size = %d\n", pkt.Total_Size);
-    PRT_INFO("pkt.Blob_CRC32 = %x\n", pkt.Blob_CRC32 );
-	
+	PRT_INFO("Send UPDATE packet	\n");
     
     iom_slave_write(IOSOFFSET_WRITE_CMD, (uint32_t*)&pkt, sizeof(pkt));
 }
@@ -571,7 +568,7 @@ void send_data(uint8_t *Blob, uint32_t size, uint32_t seq)
 	g_Data_Message.Sequence = seq;
 	memcpy(g_Data_Message.Image_Blob, Blob,size);
 	am_hal_crc32((uint32_t)&g_Data_Message.msg.msgType, g_Data_Message.msg.length - sizeof(uint32_t), &g_Data_Message.msg.crc32);
-	PRT_INFO("g_Data_Message.msg.crc32 = %x\n", g_Data_Message.msg.crc32 );	
+	PRT_INFO("Send DATA packet\n");	
 	send_SPI_Data_Fragment((uint8_t *)&g_Data_Message);
 }
 
@@ -637,7 +634,9 @@ void wait_4_ACK(void)
 int
 main(void)
 {
-    //
+	uint32_t u32TotalSize = ((uint8_t *)(&IMGDataEnd) - (uint8_t *)(&IMGDataBegin));
+	uint32_t sub_seq_size = 0;
+	//
     // Default setup.
     //
     am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_SYSCLK_MAX, 0);
@@ -699,12 +698,20 @@ main(void)
     //
     iom_slave_read(IOSOFFSET_READ_FIFO, (uint32_t*)&g_psReadData, 88);
 
-	send_update((uint8_t *)(&IMGDataBegin), ((uint8_t *)(&IMGDataEnd) - (uint8_t *)(&IMGDataBegin)));
+	send_update((uint8_t *)(&IMGDataBegin), u32TotalSize);
 	wait_4_ACK();
-	send_data((uint8_t *)(&IMGDataBegin), 8180, 0);
-	wait_4_ACK();
-	send_data((uint8_t *)(&IMGDataBegin)+8180, 13856-8180, 8180);
-	wait_4_ACK();
+
+	for(uint32_t i = 0; i < u32TotalSize; )
+	{
+		sub_seq_size = PARTIAL_IMG_SIZE;
+		if(i+PARTIAL_IMG_SIZE > u32TotalSize)
+			sub_seq_size =  (u32TotalSize - i);
+		
+		send_data((uint8_t *)(&IMGDataBegin)+i, sub_seq_size, i);
+		wait_4_ACK();
+
+		i += sub_seq_size;
+	}
 
     while (1)
     {
