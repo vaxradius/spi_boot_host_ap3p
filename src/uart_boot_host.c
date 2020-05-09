@@ -267,6 +267,24 @@ static void hostint_handler(void)
     bIosInt = true;
 }
 
+void handshake_set_up(void)
+{
+    //
+    // Set up the host IO interrupt
+    //
+    am_hal_gpio_pinconfig(BOOTLOADER_HANDSHAKE_PIN, g_AM_BSP_GPIO_BOOT_HANDSHAKE);
+
+    AM_HAL_GPIO_MASKCREATE(GpioIntMask);
+    am_hal_gpio_interrupt_clear(AM_HAL_GPIO_MASKBIT(pGpioIntMask, BOOTLOADER_HANDSHAKE_PIN));
+
+    //
+    // Register handler for IOS => IOM interrupt
+    //
+    am_hal_gpio_interrupt_register(BOOTLOADER_HANDSHAKE_PIN, hostint_handler);
+    am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, BOOTLOADER_HANDSHAKE_PIN));
+    NVIC_EnableIRQ(GPIO_IRQn);
+}
+
 //*****************************************************************************
 //
 // Initialize the IOM.
@@ -298,20 +316,7 @@ static void iom_set_up(uint32_t iomModule)
     //
     am_hal_iom_enable(g_IOMHandle);
 
-    //
-    // Set up the host IO interrupt
-    //
-    am_hal_gpio_pinconfig(BOOTLOADER_HANDSHAKE_PIN, g_AM_BSP_GPIO_BOOT_HANDSHAKE);
-
-    AM_HAL_GPIO_MASKCREATE(GpioIntMask);
-    am_hal_gpio_interrupt_clear(AM_HAL_GPIO_MASKBIT(pGpioIntMask, BOOTLOADER_HANDSHAKE_PIN));
-
-    //
-    // Register handler for IOS => IOM interrupt
-    //
-    am_hal_gpio_interrupt_register(BOOTLOADER_HANDSHAKE_PIN, hostint_handler);
-    am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, BOOTLOADER_HANDSHAKE_PIN));
-    NVIC_EnableIRQ(GPIO_IRQn);
+	//handshake_set_up();
 }
 
 //*****************************************************************************
@@ -367,7 +372,7 @@ void start_boot_mode(bool bReset)
         //
         // Short delay.
         //
-        am_util_delay_ms(1);
+        //am_util_delay_ms(1);
     }
 }
 
@@ -671,12 +676,19 @@ main(void)
     //
     // Wait for initial handshake signal to know that IOS interface is alive
     //
-    while( !bIosInt );
+    //while( !bIosInt );
+
+	am_util_delay_ms(100);
+
 
 	//
 	// Drive the override pin High after the slave into boot mode.
 	//
 	am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_SET);
+
+
+	handshake_set_up();
+	
 	
     bIosInt = false;
 
