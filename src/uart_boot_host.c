@@ -220,8 +220,7 @@ static am_hal_gpio_pincfg_t g_AM_BSP_GPIO_BOOT_HANDSHAKE =
 static am_hal_iom_config_t g_sIOMSpiConfig =
 {
     .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
-    //.ui32ClockFreq = AM_HAL_IOM_8MHZ,
-    .ui32ClockFreq = AM_HAL_IOM_400KHZ,
+    .ui32ClockFreq = AM_HAL_IOM_8MHZ,
     .eSpiMode = AM_HAL_IOM_SPI_MODE_0,    // Default
 };
 
@@ -474,7 +473,7 @@ void send_update(uint8_t *Blob, uint32_t size)
 
     pkt.hdr.bStart = 1;
     pkt.hdr.bEnd = 1;
-    pkt.hdr.length = (4*5);
+    pkt.hdr.length = (4*6);
     pkt.msg.msgType = AM_SECBOOT_WIRED_MSGTYPE_UPDATE;
     pkt.msg.length = sizeof(pkt)-sizeof(am_secboot_ios_pkthdr_t);
 	pkt.Total_Size = size;
