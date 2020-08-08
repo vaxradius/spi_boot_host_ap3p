@@ -5,7 +5,7 @@
     EXPORT  IMGDataEnd
 
 IMGDataBegin
-	INCBIN .\straight_up.bin
+	INCBIN .\straight_up_ap4.hex
 IMGDataEnd
 
 	END
