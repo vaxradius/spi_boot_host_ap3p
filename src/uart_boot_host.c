@@ -673,23 +673,20 @@ main(void)
     //
     start_boot_mode(true);
 
+	handshake_set_up();
+
     //
     // Wait for initial handshake signal to know that IOS interface is alive
     //
-    //while( !bIosInt );
+    while( !bIosInt );
 
-	am_util_delay_ms(100);
-
+	//am_util_delay_ms(100);
 
 	//
 	// Drive the override pin High after the slave into boot mode.
 	//
 	am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_SET);
 
-
-	handshake_set_up();
-	
-	
     bIosInt = false;
 
     //
