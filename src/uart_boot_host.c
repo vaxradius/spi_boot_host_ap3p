@@ -344,7 +344,7 @@ void start_boot_mode(bool bReset)
         //
         // Drive the override pin high and configure the pin.
         //
-        am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_SET);
+        am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
         am_hal_gpio_pinconfig(DRIVE_SLAVE_OVERRIDE_PIN, g_AM_HAL_GPIO_OUTPUT);
     }
     else
@@ -357,7 +357,7 @@ void start_boot_mode(bool bReset)
         //
         // Drive the override pin low to force the slave into boot mode.
         //
-        am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
+        am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_SET);
 
         //
         // Short delay.
@@ -685,7 +685,7 @@ main(void)
 	//
 	// Drive the override pin High after the slave into boot mode.
 	//
-	am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_SET);
+	am_hal_gpio_state_write(DRIVE_SLAVE_OVERRIDE_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
 
     bIosInt = false;
 
